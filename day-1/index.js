@@ -1,20 +1,20 @@
-const fs = require("fs");
-const readline = require("readline");
+const fs = require('fs');
+const readline = require('readline');
 
 const interface = readline.createInterface({
-  input: fs.createReadStream("input.txt"),
+  input: fs.createReadStream('input.txt'),
   output: process.stdout,
   terminal: false
 });
 
 let totalFuelReq = 0;
 
-interface.on("line", mass => {
+interface.on('line', mass => {
   const moduleFuelReq = calculateModuleFuelReq(mass);
   totalFuelReq += moduleFuelReq;
 });
 
-interface.on("close", () => {
+interface.on('close', () => {
   console.log(totalFuelReq);
 });
 

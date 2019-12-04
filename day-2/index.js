@@ -1,8 +1,8 @@
-const fs = require("fs");
-const intCode = require("./intcode");
+const fs = require('fs');
+const intCode = require('./intcode');
 
-const file = fs.readFileSync("input.txt").toString();
-const numbers = file.split(",");
+const file = fs.readFileSync('input.txt').toString();
+const numbers = file.split(',');
 
 const maxIterations = 10000;
 const targetResult = 19690720;
@@ -16,7 +16,7 @@ if (input) {
       input.verb}`
   );
 } else {
-  console.log("Could not calculate input.");
+  console.log('Could not calculate input.');
 }
 
 function calculateInputForOutput(expectedResult) {
