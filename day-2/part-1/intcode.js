@@ -22,7 +22,7 @@ function compute() {
     step();
   }
 
-  this.result = numbers[0];
+  this.result = numbers;
 }
 
 function processInstruction() {

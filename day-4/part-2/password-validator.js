@@ -10,7 +10,6 @@ function validate(password) {
     if (nextChar && char > nextChar) return false;
 
     counts[char] = counts[char] + 1 || 1;
-    prevChar = nextChar;
   }
 
   let containsPair = false;
