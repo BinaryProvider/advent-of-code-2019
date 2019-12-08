@@ -7,6 +7,13 @@ const OPERATIONS = {
   4: output
 };
 
+const PARAM_LENGTH = {
+  1: 3,
+  2: 3,
+  3: 1,
+  4: 1
+};
+
 let result = undefined;
 let numbers = [];
 let pointer = 0;
@@ -24,15 +31,21 @@ function compute(input) {
   let isRunning = true;
 
   do {
-    isRunning = processInstruction(input);
+    const instruction = parseInstruction(numbers[pointer]);
+
+    if (instruction.opCode === EXIT_CODE || isNaN(instruction.opCode)) {
+      isRunning = false;
+    } else {
+      processInstruction(instruction, input);
+    }
+
+    step(instruction.length + 1);
   } while (isRunning);
 
   this.result = numbers;
 }
 
-function processInstruction(input) {
-  const instruction = numbers[pointer];
-
+function parseInstruction(instruction) {
   const params = (new Array(5).join('0') + instruction)
     .slice(-5)
     .split('')
@@ -43,35 +56,26 @@ function processInstruction(input) {
   const mode1 = params[2];
   const mode2 = params[3];
   const mode3 = params[4];
+  const length = PARAM_LENGTH[opCode];
 
-  if (opCode === EXIT_CODE) {
-    return false;
+  return {
+    opCode,
+    mode1,
+    mode2,
+    mode3,
+    length
+  };
+}
+
+function processInstruction(instruction, input) {
+  if (OPERATIONS[instruction.opCode]) {
+    OPERATIONS[instruction.opCode](
+      input,
+      instruction.mode1,
+      instruction.mode2,
+      instruction.mode3
+    );
   }
-
-  console.log(opCode);
-
-  if (OPERATIONS[opCode]) {
-    OPERATIONS[opCode](mode1, mode2, mode3, input);
-  } else {
-    return false;
-  }
-
-  // step(instruction.toString().length);
-  // const opCode = numbers[pointer];
-
-  // if (opCode === EXIT_CODE) {
-  //   return false;
-  // }
-
-  // if (OPERATIONS[opCode]) {
-  //   OPERATIONS[opCode]();
-  // } else {
-  //   return false;
-  // }
-
-  // if (pointer < numbers.length) return false;
-
-  step(4);
 }
 
 function step(steps) {
@@ -80,31 +84,34 @@ function step(steps) {
 
 function getParam(input, byVal, writeParam) {
   writeParam = writeParam || false;
-  const param = byVal && !writeParam ? input : numbers[input];
+  byVal = writeParam ? true : byVal;
+  const param = byVal ? input : numbers[input];
   return param;
 }
 
-function add(mode1, mode2) {
+function add(input, mode1, mode2) {
   const p1 = getParam(numbers[pointer + 1], mode1);
   const p2 = getParam(numbers[pointer + 2], mode2);
+  const writeAddress = numbers[pointer + 3];
   const output = p1 + p2;
-  numbers[numbers[pointer + 3]] = output;
+  numbers[writeAddress] = output;
 }
 
-function multiply(mode1, mode2) {
+function multiply(input, mode1, mode2) {
   const p1 = getParam(numbers[pointer + 1], mode1);
   const p2 = getParam(numbers[pointer + 2], mode2);
+  const writeAddress = numbers[pointer + 3];
   const output = p1 * p2;
-  numbers[numbers[pointer + 3]] = output;
+  numbers[writeAddress] = output;
 }
 
-function save(mode1, mode2, mode3, input) {
-  const address = getParam(numbers[pointer + 1], mode1);
+function save(input, mode1, mode2, mode3) {
+  const address = getParam(numbers[pointer + 1], true);
   numbers[address] = input;
 }
 
-function output(mode1, mode2, mode3) {
-  const address = getParam(numbers[pointer + 1], mode1);
+function output(input, mode1, mode2, mode3) {
+  const address = getParam(numbers[pointer + 1], true);
   console.log(numbers[address]);
 }
 

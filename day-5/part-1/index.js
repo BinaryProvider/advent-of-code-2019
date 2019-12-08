@@ -5,7 +5,7 @@ const result = runDiagnostics(1);
 // console.log(result);
 
 function runDiagnostics(input) {
-  const file = fs.readFileSync('testinput.txt').toString();
+  const file = fs.readFileSync('input.txt').toString();
   const numbers = file.split(',').map(Number);
   return runComputations(input, numbers);
 }
