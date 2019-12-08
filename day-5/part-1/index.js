@@ -1,8 +1,7 @@
 const fs = require('fs');
 const intCode = require('./intcode');
 
-const result = runDiagnostics(1);
-// console.log(result);
+runDiagnostics(1);
 
 function runDiagnostics(input) {
   const file = fs.readFileSync('input.txt').toString();
