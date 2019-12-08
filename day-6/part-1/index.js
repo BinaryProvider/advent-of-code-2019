@@ -25,13 +25,13 @@ interface.on('line', line => {
 
 interface.on('close', () => {
   Object.keys(orbits).forEach(body => {
-    orbitCount += countSatellites(body);
+    orbitCount += countOrbits(body);
   });
 
   console.log(orbitCount);
 });
 
-function countSatellites(body) {
+function countOrbits(body) {
   let count = 0;
 
   const satellites = orbits[body];
@@ -40,7 +40,7 @@ function countSatellites(body) {
     count += satellites.length;
 
     satellites.forEach(satellite => {
-      count += countSatellites(satellite);
+      count += countOrbits(satellite);
     });
   } else {
     return count;
