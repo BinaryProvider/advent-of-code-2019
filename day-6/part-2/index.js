@@ -2,88 +2,77 @@ const fs = require('fs');
 const readline = require('readline');
 
 const interface = readline.createInterface({
-  input: fs.createReadStream('testinput.txt'),
+  input: fs.createReadStream('input.txt'),
   output: process.stdout,
   terminal: false
 });
 
-const orbits = {};
-let yourOrbit;
-let santasOrbit;
+const bodies = {};
+let yourLoc;
+let santasLoc;
 
 interface.on('line', line => {
-  const bodies = line.split(')');
-  const body = bodies[0];
-  const satellite = bodies[1];
+  const data = line.split(')');
 
-  if (!orbits[body]) {
-    orbits[body] = [satellite];
-  } else {
-    orbits[body].push(satellite);
+  const body = {
+    name: data[1],
+    parent: data[0]
+  };
+
+  if (body.name === 'YOU') {
+    yourLoc = body;
+  } else if (body.name === 'SAN') {
+    santasLoc = body;
   }
 
-  const orbit = orbits[body];
-
-  if (orbit.includes('YOU')) {
-    yourOrbit = body;
-  }
-
-  if (orbit.includes('SAN')) {
-    santasOrbit = body;
-  }
+  bodies[body.name] = body;
 });
 
 interface.on('close', () => {
   let reachedSanta = false;
   let orbitalTransfers = 0;
-  let yourTransfers = [];
-  let santasTransfers = [];
-  let yourCalcOrbit = yourOrbit;
-  let santasCalcOrbit = santasOrbit;
+
+  const yourTransfers = [];
+  const santasTransfers = [];
+
+  yourLoc = bodies[yourLoc.parent];
+  santasLoc = bodies[santasLoc.parent];
 
   while (!reachedSanta) {
-    const newOrbits = calculateOrbitalTransfers(yourCalcOrbit, santasCalcOrbit);
+    yourLoc = bodies[yourLoc.parent];
+    santasLoc = bodies[santasLoc.parent];
 
-    yourCalcOrbit = newOrbits.you;
-    santasCalcOrbit = newOrbits.santa;
+    santasTransfers.push(santasLoc.name);
+    yourTransfers.push(yourLoc.name);
 
-    yourTransfers.push(newOrbits.you);
-    santasTransfers.push(newOrbits.santa);
-
-    // santasTransfers.forEach((orbitalTransfer, index) => {
-    //   if (orbitalTransfer === yourCalcOrbit) {
-    //     orbitalTransfers = yourTransfers.length + index;
-    //     reachedSanta = true;
-    //     return;
-    //   }
-    // });
-
-    if (!newOrbits.you && !newOrbits.santa) reachedSanta = true;
+    if (
+      santasTransfers.includes(yourLoc.name) ||
+      yourTransfers.includes(santasLoc.name)
+    ) {
+      reachedSanta = true;
+    }
   }
 
-  console.log(yourTransfers);
-  console.log(santasTransfers);
-});
+  const intersection = yourTransfers.filter(
+    value => -1 !== santasTransfers.indexOf(value)
+  );
 
-function calculateOrbitalTransfers(yourOrbit, santasOrbit) {
-  let yourNewOrbit;
-  let santasNewOrbit;
-
-  Object.keys(orbits).forEach(body => {
-    if (orbits[body].includes(yourOrbit)) {
-      yourNewOrbit = body;
-    }
-
-    if (orbits[body].includes(santasOrbit)) {
-      santasNewOrbit = body;
-    }
+  let yourSteps = 0;
+  yourTransfers.some(body => {
+    yourSteps++;
+    return body == intersection;
   });
 
-  return {
-    you: yourNewOrbit,
-    santa: santasNewOrbit
-  };
-}
+  let santasSteps = 0;
+  santasTransfers.some(body => {
+    santasSteps++;
+    return body == intersection;
+  });
+
+  orbitalTransfers = santasSteps + yourSteps;
+
+  console.log(orbitalTransfers);
+});
 
 function countOrbits(body) {
   let count = 0;
