@@ -12,6 +12,7 @@ generatePermutations(availablePhaseSettings.length, availablePhaseSettings);
 permutations.forEach(phaseSettings => {
   let output = 0;
   phaseSettings.forEach(phaseSetting => {
+    console.log(output);
     output = runComputations([phaseSetting, output], [...numbers]);
     maxOutput = Math.max(output, maxOutput);
   });
