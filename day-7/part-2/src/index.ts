@@ -7,11 +7,11 @@ export class Application {
   private file: Buffer;
   private filePath: string;
   private numbers: number[];
-  private phaseSettingSequence = [9, 8, 7, 6, 5];
+  private phaseSettingSequence = [5, 6, 7, 8, 9];
   private permutations: number[][];
 
   constructor() {
-    this.filePath = path.join(__dirname, '../input', 'testinput.txt');
+    this.filePath = path.join(__dirname, '../input', 'input.txt');
     this.file = fs.readFileSync(this.filePath);
 
     this.permutations = new PermutationGenerator(
@@ -28,8 +28,6 @@ export class Application {
     const app = new Application();
 
     let maxOutput = 0;
-
-    // app.permutations = [9, 8, 7, 6, 5];
 
     app.permutations.forEach((phaseSetting: number[]) => {
       const ampA = new IntCodeComputer([...app.numbers]);
@@ -52,31 +50,29 @@ export class Application {
       ampE.input.push(phaseSetting[4]);
       ampE.run();
 
-      let allRunning = false;
-      let prevOutput = 0;
+      let allRunning = true;
+      let output = 0;
 
       do {
-        ampA.input.push(prevOutput);
+        ampA.input.push(output);
         ampA.run();
-        prevOutput = ampA.output;
+        output = ampA.output;
 
-        ampB.input.push(prevOutput);
+        ampB.input.push(output);
         ampB.run();
-        prevOutput = ampB.output;
+        output = ampB.output;
 
-        ampC.input.push(prevOutput);
+        ampC.input.push(output);
         ampC.run();
-        prevOutput = ampC.output;
+        output = ampC.output;
 
-        ampD.input.push(prevOutput);
+        ampD.input.push(output);
         ampD.run();
-        prevOutput = ampD.output;
+        output = ampD.output;
 
-        ampE.input.push(prevOutput);
+        ampE.input.push(output);
         ampE.run();
-        prevOutput = ampE.output;
-
-        ampA.input.push(prevOutput);
+        output = ampE.output;
 
         allRunning =
           ampA.isRunning &&
@@ -84,22 +80,9 @@ export class Application {
           ampC.isRunning &&
           ampD.isRunning &&
           ampE.isRunning;
-
-        console.log(allRunning);
       } while (allRunning);
 
-      maxOutput = Math.max(prevOutput, maxOutput);
-
-      // phaseSettings.forEach((phaseSetting: number, index: number) => {
-      //   const amplifier = new IntCodeComputer([...app.numbers]);
-
-      //   amplifier.output.on('result', (output: number) => {
-      //     ampOutput = output;
-      //     maxOutput = Math.max(output, maxOutput);
-      //   });
-
-      //   amplifier.run([phaseSetting, ampOutput]);
-      // });
+      maxOutput = Math.max(output, maxOutput);
     });
 
     console.log(maxOutput);

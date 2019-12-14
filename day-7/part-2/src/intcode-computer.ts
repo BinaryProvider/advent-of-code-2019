@@ -1,5 +1,3 @@
-import { EventEmitter } from 'events';
-
 export enum OperationCode {
   ADD = 1,
   MULTIPLY = 2,
@@ -46,9 +44,9 @@ export class IntCodeComputer {
   public output: number = NaN;
   public input: number[] = [];
   public isRunning: boolean = false;
+  public isPaused: boolean = false;
 
-  private isPaused: boolean = false;
-  private cursor: number = 0;
+  private pointer: number = 0;
   private operations: Operations;
   private paramCount: ParameterCount;
 
@@ -78,10 +76,10 @@ export class IntCodeComputer {
 
   public run() {
     this.isRunning = true;
-    // this.cursor = 0;
+    this.isPaused = false;
 
     do {
-      const instruction = this.parseInstruction(this.numbers[this.cursor]);
+      const instruction = this.parseInstruction(this.numbers[this.pointer]);
 
       let jumpCursor = NaN;
       let instructionCursor = instruction.length + 1;
@@ -92,22 +90,26 @@ export class IntCodeComputer {
       ) {
         this.isRunning = false;
       } else {
-        jumpCursor = this.processInstruction(
-          instruction,
-          this.input[this.input.length - 1]
-        );
-      }
-
-      if (instruction.opCode === OperationCode.SAVE) {
-        this.isPaused = true;
+        if (
+          instruction.opCode === OperationCode.SAVE &&
+          this.input.length === 0
+        ) {
+          this.isPaused = true;
+          break;
+        }
+        jumpCursor = this.processInstruction(instruction, this.input.pop());
       }
 
       if (isNaN(jumpCursor)) {
-        this.cursor += instructionCursor;
+        this.pointer += instructionCursor;
       } else {
-        this.cursor = jumpCursor;
+        this.pointer = jumpCursor;
       }
-    } while (this.isRunning);
+
+      if (instruction.opCode === OperationCode.OUTPUT) {
+        this.isPaused = true;
+      }
+    } while (this.isRunning && !this.isPaused);
   }
 
   private parseInstruction(instruction: number): Instruction {
@@ -134,7 +136,10 @@ export class IntCodeComputer {
     };
   }
 
-  private processInstruction(instruction: Instruction, input: number): number {
+  private processInstruction(
+    instruction: Instruction,
+    input: number | undefined
+  ): number {
     const opCode = instruction.opCode as keyof Operations;
 
     if (this.operations[opCode]) {
@@ -154,62 +159,62 @@ export class IntCodeComputer {
   }
 
   private add(paramMode: boolean[]): number {
-    const p1 = this.getParam(this.numbers[this.cursor + 1], paramMode[0]);
-    const p2 = this.getParam(this.numbers[this.cursor + 2], paramMode[1]);
-    const writeAddress = this.numbers[this.cursor + 3];
+    const p1 = this.getParam(this.numbers[this.pointer + 1], paramMode[0]);
+    const p2 = this.getParam(this.numbers[this.pointer + 2], paramMode[1]);
+    const writeAddress = this.numbers[this.pointer + 3];
     const output = p1 + p2;
     this.numbers[writeAddress] = output;
     return NaN;
   }
 
   private multiply(paramMode: boolean[]): number {
-    const p1 = this.getParam(this.numbers[this.cursor + 1], paramMode[0]);
-    const p2 = this.getParam(this.numbers[this.cursor + 2], paramMode[1]);
-    const writeAddress = this.numbers[this.cursor + 3];
+    const p1 = this.getParam(this.numbers[this.pointer + 1], paramMode[0]);
+    const p2 = this.getParam(this.numbers[this.pointer + 2], paramMode[1]);
+    const writeAddress = this.numbers[this.pointer + 3];
     const output = p1 * p2;
     this.numbers[writeAddress] = output;
     return NaN;
   }
 
   private save(paramMode: boolean[], input?: number): number {
-    const address = this.getParam(this.numbers[this.cursor + 1], true);
+    const address = this.getParam(this.numbers[this.pointer + 1], true);
     if (input !== null && input !== undefined) this.numbers[address] = input;
     return NaN;
   }
 
   private emitOutput(paramMode: boolean[]): number {
-    const value = this.getParam(this.numbers[this.cursor + 1], paramMode[0]);
+    const value = this.getParam(this.numbers[this.pointer + 1], paramMode[0]);
     this.output = value;
     return NaN;
   }
 
   private jumpIfTrue(paramMode: boolean[]): number {
-    const p1 = this.getParam(this.numbers[this.cursor + 1], paramMode[0]);
-    const p2 = this.getParam(this.numbers[this.cursor + 2], paramMode[1]);
+    const p1 = this.getParam(this.numbers[this.pointer + 1], paramMode[0]);
+    const p2 = this.getParam(this.numbers[this.pointer + 2], paramMode[1]);
     if (p1 !== 0) return p2;
     return NaN;
   }
 
   private jumpIfFalse(paramMode: boolean[]): number {
-    const p1 = this.getParam(this.numbers[this.cursor + 1], paramMode[0]);
-    const p2 = this.getParam(this.numbers[this.cursor + 2], paramMode[1]);
+    const p1 = this.getParam(this.numbers[this.pointer + 1], paramMode[0]);
+    const p2 = this.getParam(this.numbers[this.pointer + 2], paramMode[1]);
     if (p1 === 0) return p2;
     return NaN;
   }
 
   private lessThan(paramMode: boolean[]): number {
-    const p1 = this.getParam(this.numbers[this.cursor + 1], paramMode[0]);
-    const p2 = this.getParam(this.numbers[this.cursor + 2], paramMode[1]);
-    const writeAddress = this.numbers[this.cursor + 3];
+    const p1 = this.getParam(this.numbers[this.pointer + 1], paramMode[0]);
+    const p2 = this.getParam(this.numbers[this.pointer + 2], paramMode[1]);
+    const writeAddress = this.numbers[this.pointer + 3];
     const value = p1 < p2 ? 1 : 0;
     this.numbers[writeAddress] = value;
     return NaN;
   }
 
   private equals(paramMode: boolean[]): number {
-    const p1 = this.getParam(this.numbers[this.cursor + 1], paramMode[0]);
-    const p2 = this.getParam(this.numbers[this.cursor + 2], paramMode[1]);
-    const writeAddress = this.numbers[this.cursor + 3];
+    const p1 = this.getParam(this.numbers[this.pointer + 1], paramMode[0]);
+    const p2 = this.getParam(this.numbers[this.pointer + 2], paramMode[1]);
+    const writeAddress = this.numbers[this.pointer + 3];
     const value = p1 === p2 ? 1 : 0;
     this.numbers[writeAddress] = value;
     return NaN;
