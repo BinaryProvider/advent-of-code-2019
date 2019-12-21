@@ -56,8 +56,8 @@ export class Application {
     });
 
     rl.on('close', () => {
-      const result = this.identifyBestLocation(this.grid);
-      console.log('x:', result.x, 'y:', result.y, 'count:', result.count);
+      const bestLocation = this.identifyBestLocation();
+      this.deployInstantMonitoringStation(bestLocation!);
     });
   }
 
@@ -67,7 +67,7 @@ export class Application {
       .join('');
   }
 
-  private identifyBestLocation(grid: string[][]): any {
+  private identifyBestLocation(): Asteroid | undefined {
     let maxAsteroids = 0;
     let bestLocation: Asteroid | undefined;
 
@@ -84,11 +84,45 @@ export class Application {
       }
     });
 
-    return {
-      x: bestLocation!.x,
-      y: bestLocation!.y,
-      count: maxAsteroids
-    };
+    return bestLocation;
+  }
+
+  private deployInstantMonitoringStation(asteroid: Asteroid) {
+    const baseLocationIndex = this.asteroids.findIndex(
+      a => a.x === asteroid.x && a.y === asteroid.y
+    );
+
+    this.asteroids.splice(baseLocationIndex, 1);
+
+    const relativeAsteroids = this.findAsteroidsRelativeTo(asteroid);
+    let visibleAsteroids: any = [];
+    let vaporized: Asteroid[] = [];
+
+    Object.keys(relativeAsteroids).forEach(angle => {
+      const asteroidsOnAngle = relativeAsteroids[+angle];
+      visibleAsteroids.push([
+        +angle,
+        asteroidsOnAngle.sort((_a, b) => this.distanceBetween(asteroid, b))[0]
+      ]);
+    });
+
+    visibleAsteroids = visibleAsteroids.map((x: any) => [
+      this.convertAngle(x[0]),
+      x[1]
+    ]);
+
+    vaporized = visibleAsteroids
+      .sort((a: any, b: any) => (a[0] > b[0] ? 1 : a[0] < b[0] ? -1 : 0))
+      .map((x: any) => x[1]);
+
+    vaporized.forEach((a: Asteroid, index: number) => {
+      if (index === 199) {
+        console.log(
+          `${index + 1}. Destroyed asteroid at ${asteroid.x +
+            a.x},${asteroid.y + a.y}.`
+        );
+      }
+    });
   }
 
   private findAsteroidsRelativeTo(
@@ -143,6 +177,14 @@ export class Application {
     const x = a.x - b.x;
     const y = a.y - b.y;
     return Math.max(Math.abs(x), Math.abs(y));
+  }
+
+  private convertAngle(angle: number): number {
+    angle = angle < 0 ? 360 + angle : angle;
+    angle += 91;
+    angle = angle > 360 ? angle - 360 : angle;
+    angle -= 1;
+    return angle;
   }
 }
 
